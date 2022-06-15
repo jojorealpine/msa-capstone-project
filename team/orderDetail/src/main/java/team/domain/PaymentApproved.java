@@ -1,0 +1,14 @@
+package team.domain;
+
+import java.util.Date;
+import lombok.Data;
+import team.infra.AbstractEvent;
+
+@Data
+public class PaymentApproved extends AbstractEvent {
+
+    private Long id;
+    private Long orderId;
+    private String payStatus;
+    private Double payAmount;
+}
