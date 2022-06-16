@@ -11,6 +11,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import team.config.kafka.KafkaProcessor;
 import team.domain.*;
+import java.util.List;
 
 @Service
 @Transactional
@@ -23,9 +24,7 @@ public class PolicyHandler {
     public void whatever(@Payload String eventString) {}
 
     @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverOrderCanceled_CancelPayment(
-        @Payload OrderCanceled orderCanceled
-    ) {
+    public void wheneverOrderCanceled_CancelPayment(@Payload OrderCanceled orderCanceled) {
         if (!orderCanceled.validate()) return;
         OrderCanceled event = orderCanceled;
         System.out.println(
@@ -34,8 +33,12 @@ public class PolicyHandler {
             "\n\n"
         );
 
-        // Sample Logic //
-        Payment.cancelPayment(event);
+        if(orderCanceled.validate()){
+            List<Payment> paymentList = paymentRepository.findByOrderId(orderCanceled.getOrderId());
+            if ((paymentList != null) && !paymentList.isEmpty()){
+                paymentRepository.deleteAll(paymentList);
+            }
+        }
     }
     // keep
 

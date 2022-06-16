@@ -7,6 +7,7 @@ import lombok.Data;
 import team.OrderApplication;
 import team.domain.OrderCanceled;
 import team.domain.Ordered;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Table(name = "Order_table")
@@ -38,6 +39,7 @@ public class Order {
     @PostPersist
     public void onPostPersist() {
         Ordered ordered = new Ordered(this);
+        BeanUtils.copyProperties(this, ordered);
         ordered.publishAfterCommit();
 
         //Following code causes dependency to external APIs
@@ -45,11 +47,19 @@ public class Order {
 
         team.external.Payment payment = new team.external.Payment();
         // mappings goes here
+        payment.setOrderId(ordered.getOrderId());
         OrderApplication.applicationContext
             .getBean(team.external.PaymentService.class)
             .requestPayment(payment);
 
         OrderCanceled orderCanceled = new OrderCanceled(this);
+        orderCanceled.publishAfterCommit();
+    }
+
+    @PreRemove
+    public void onPreRemove(){
+        OrderCanceled orderCanceled = new OrderCanceled();
+        BeanUtils.copyProperties(this, orderCanceled);
         orderCanceled.publishAfterCommit();
     }
 

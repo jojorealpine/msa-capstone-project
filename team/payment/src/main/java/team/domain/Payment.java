@@ -7,6 +7,7 @@ import lombok.Data;
 import team.PaymentApplication;
 import team.domain.PaymentApproved;
 import team.domain.PaymentCanceled;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Table(name = "Payment_table")
@@ -37,6 +38,13 @@ public class Payment {
             PaymentRepository.class
         );
         return paymentRepository;
+    }
+
+    @PreRemove
+    public void onPreRemove(){
+        PaymentCanceled paymentCanceled = new PaymentCanceled();
+        BeanUtils.copyProperties(this, paymentCanceled);
+        paymentCanceled.publishAfterCommit();
     }
 
     public static void cancelPayment(OrderCanceled orderCanceled) {
